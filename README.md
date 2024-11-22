@@ -5,7 +5,6 @@ This project automates the scheduling of streaming events on YouTube and the cre
 ## Edit config.ini and Google credentials
 
 Remove the `.sample` from the file name, then fill it in with the Ant Media Server key, URL, and port where you access Ant Media Server.
-Access your Google Cloud project, enable the YouTube Data API, and create desktop app credentials. Download them and name them `credentials_oauth.json`.
 
 ## Project Structure
 
@@ -97,8 +96,8 @@ Access your Google Cloud project, enable the YouTube Data API, and create deskto
 
 | Video Name           | Start Time           | Video URL                                          | RTMP URL                          |
 |----------------------|----------------------|----------------------------------------------------|------------------------------------|
-| video1del11numero1   | 2024-11-01 05:30     | https://vmi2172237.contaboserver.net/LiveApp/video1del11numero1.mp4 | rtmp://a.rtmp.youtube.com/live2/generated_key_1 |
-| video2del11numero1   | 2024-11-01 07:30     | https://vmi2172237.contaboserver.net/LiveApp/video2del11numero1.mp4 | rtmp://a.rtmp.youtube.com/live2/generated_key_2 |
+| video1del11numero1   | 2024-11-01 05:30     | https://yourantmediaserverURL/LiveApp/video1del11numero1.mp4 | rtmp://a.rtmp.youtube.com/live2/generated_key_1 |
+| video2del11numero1   | 2024-11-01 07:30     | https://yourantmediaserverURL/LiveApp/video2del11numero1.mp4 | rtmp://a.rtmp.youtube.com/live2/generated_key_2 |
 | ...                  | ...                  | ...                                                | ...                                |
 
 ## Notes
