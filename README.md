@@ -41,7 +41,9 @@ Remove the `.sample` from the file name, then fill it in with the Ant Media Serv
 ### 1. Prepare Files
 
    - **Place videos**: Ensure the video files are in the `videos/` folder and that their names follow the format `videoXdelYYnumeroZ.mp4`.
+   - **Upload videos to the server**: Create a folder within the LiveApp called videos and upload all videos following the same format as the local videos folder, as they are needed for playback.
    - **Configure event titles**: In `stream_titles.xlsx`, enter the event titles in the `Name` column. Make sure the number of titles is sufficient for all videos.
+
 
 ### 2. Run the Script
 
