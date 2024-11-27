@@ -73,12 +73,12 @@ def load_stream_titles(filename="stream_titles.xlsx"):
         return []
 
 def parse_video_name(video_name):
-    match = re.search(r"video(\d+)del(\d{1,2})numero(\d+)", video_name)
+    match = re.search(r"video(\d{2})del(\d{2})numero(\d+)", video_name)
     if match:
-        video_num = int(match.group(1))
-        month = int(match.group(2))
-        day = int(match.group(3))
-        return month, day, video_num
+        day = int(match.group(1))  # Día
+        month = int(match.group(2))  # Mes
+        video_num = int(match.group(3))  # Número del video
+        return day, month, video_num
     return None, None, None
 
 def generate_videos_from_files():
@@ -90,42 +90,43 @@ def generate_videos_from_files():
 
     grouped_videos = {}
 
+    # Agrupar videos correctamente por día y mes
     for video_file in video_files:
         video_name, _ = os.path.splitext(video_file)
-        month, day, video_num = parse_video_name(video_name)
-        if month and day:
+        day, month, video_num = parse_video_name(video_name)
+        if day and month and video_num:
             video_url = f"{base_url}{video_file}"
-            if month not in grouped_videos:
-                grouped_videos[month] = []
-            grouped_videos[month].append({
+            date_key = f"{day:02}-{month:02}"  # Clave única por día y mes
+            if date_key not in grouped_videos:
+                grouped_videos[date_key] = []
+            grouped_videos[date_key].append({
                 "Video Name": video_name,
                 "Number": video_num,
                 "Video URL": video_url,
                 "Month": month,
                 "Day": day,
+                "Video Number": video_num,
             })
 
-    log_info("Videos grouped by month:")
-    for month, video_list in grouped_videos.items():
-        log_info(f"  - Month {month:02}: {[v['Video Name'] for v in video_list]}")
+    log_info("Videos grouped by day and month:")
+    for date_key, video_list in grouped_videos.items():
+        log_info(f"  - {date_key}: {[v['Video Name'] for v in video_list]}")
 
-    for month, video_list in grouped_videos.items():
-        video_list.sort(key=lambda v: (v["Day"], v["Number"]))
-        current_day = 1
-        base_time = datetime(datetime.now().year, month, current_day, 5, 30)
-        log_info(f"\nAssigning schedules for month {month:02} (starting from {base_time}):")
+    # Asignar horarios incrementalmente dentro del día
+    for date_key, video_list in grouped_videos.items():
+        video_list.sort(key=lambda v: v["Video Number"])  # Ordenar por número de video
+        day, month = map(int, date_key.split('-'))
+        base_time = datetime(datetime.now().year, month, day, 5, 30)  # Hora inicial del día
+        log_info(f"\nAssigning schedules for {date_key} (starting from {base_time}):")
         for i, video in enumerate(video_list):
-            start_time = base_time + timedelta(hours=(i % 3) * 2)
-            if i % 3 == 0 and i != 0:
-                current_day += 1
-                base_time = datetime(datetime.now().year, month, current_day, 5, 30)
-                start_time = base_time
+            start_time = base_time + timedelta(hours=i * schedule_interval_hours)
             video["Start Time"] = start_time
             log_info(f"  - {video['Video Name']} -> {start_time}")
             videos.append(video)
 
     log_success(f"Total videos processed: {len(videos)}")
     return videos
+
 
 def create_stream_key(video_name):
     log_section(f"Creating Stream Key for {video_name}")
@@ -208,7 +209,6 @@ def create_youtube_event(title, start_time, stream_id, stream_key, thumbnail_pat
     except Exception as e:
         log_error(f"Error creating YouTube event: {e}")
 
-
 def upload_thumbnail(broadcast_id, thumbnail_path):
     if not thumbnail_path:
         log_warning("No thumbnail path provided. Skipping thumbnail upload.")
@@ -286,28 +286,20 @@ log_info(f"Total videos to process: {len(videos)}")
 for i, video in enumerate(videos):
     log_section(f"Processing Video {i + 1}/{len(videos)}: {video['Video Name']}")
     
-    # Determine the YouTube title
     title_for_youtube = stream_titles[i] if i < len(stream_titles) else f"Stream {i + 1}"
     log_info(f"YouTube Title: {title_for_youtube}")
     
-    # Assign start time
     start_time = video["Start Time"]
     log_info(f"Scheduled Start Time: {start_time}")
 
-    # Create stream key
     stream_id, stream_key = create_stream_key(video["Video Name"])
-
-    # Generate thumbnail
     video_path = os.path.join("videos", f"{video['Video Name']}.mp4")
     thumbnail_path = generate_thumbnail_ffmpeg(video_path, video["Video Name"])
 
-    # Create YouTube event
     create_youtube_event(title_for_youtube, start_time, stream_id, stream_key, thumbnail_path)
-
-    # Create playlist in Ant Media Server
+    
     create_playlist_ant_media(video["Video URL"], video["Video Name"], start_time, f"{rtmp_base_url}{stream_key}")
 
-    # Add data to schedule
     schedule_data.append({
         "Video Name": video["Video Name"],
         "YouTube Title": title_for_youtube,
